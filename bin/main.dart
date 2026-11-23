@@ -149,7 +149,7 @@ COPY DEMONSTRATIONS
           String name = ask('New Name: ');
           String position = ask('New Position: ');
 
-          manager.updatePlayer(id, name, position);
+          manager.updatePlayer(playerUpdateId, name, position);
           break;
 
         case 12:
@@ -187,7 +187,7 @@ COPY DEMONSTRATIONS
           int score1 = askInt('First Team Score: ');
           int score2 = askInt('Second Team Score: ');
 
-          tournament.recordResult(id, score1, score2);
+          tournament.recordResult(resultMatchId, score1, score2);
           break;
 
         case 17:
