@@ -181,6 +181,12 @@ class TeamManager {
     return true;
   }
 
+  // Find team by name.
+  Team? findTeam(String name) {
+    String key = name.trim().toLowerCase();
+    return teams[key];
+  }
+
   // Assign player to team.
   bool assignPlayer(int playerId, String teamName) {
     if (!players.containsKey(playerId)) {
