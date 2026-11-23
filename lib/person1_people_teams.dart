@@ -1,217 +1,414 @@
-// PERSON 1: Registration and Teams
+
+// PERSON 1: Participants, Players, Coaches and Teams
+
+// Abstract parent class with exactly TWO abstract methods.
 abstract class Participant {
-  final int id;
-  String name;
-  Participant({required this.id, required this.name});
-  void display() => print('ID: $id | Name: $name');
+  int id;
+  String nameValue;
+
+  Participant({required this.id, required String name})
+      : nameValue = '' {
+    if (id <= 0) {
+      throw ArgumentError('ID must be positive.');
+    }
+    this.name = name;
+  }
+
+  // Public getter and setter with validation.
+  String get name => nameValue;
+
+  set name(String value) {
+    if (value.trim().isEmpty) {
+      throw ArgumentError('Name cannot be empty.');
+    }
+    nameValue = value.trim();
+  }
+
+  // Exactly two abstract methods.
+  void display();
+  String getRole();
 }
 
+// First child class.
 class Player extends Participant {
-  String position;
-  Player({required super.id, required super.name, required this.position});
+  String positionValue = '';
+
+  Player({
+    required super.id,
+    required super.name,
+    required String position,
+  }) {
+    this.position = position;
+  }
+
+  // Named constructor.
+  Player.beginner({
+    required int id,
+    required String name,
+  }) : super(id: id, name: name) {
+    position = 'Beginner';
+  }
+
+  String get position => positionValue;
+
+  set position(String value) {
+    if (value.trim().isEmpty) {
+      throw ArgumentError('Position cannot be empty.');
+    }
+    positionValue = value.trim();
+  }
+
   @override
-  void display() => print('Player #$id | $name | $position');
+  void display() {
+    print('Player ID: $id | Name: $name | Position: $position');
+  }
+
+  @override
+  String getRole() => 'Player';
 }
 
+// Second child class.
 class Coach extends Participant {
-  int experienceYears;
-  Coach({required super.id, required super.name, required this.experienceYears});
+  int experienceYearsValue = 0;
+
+  Coach({
+    required super.id,
+    required super.name,
+    required int experienceYears,
+  }) {
+    this.experienceYears = experienceYears;
+  }
+
+  int get experienceYears => experienceYearsValue;
+
+  set experienceYears(int value) {
+    if (value < 0) {
+      throw ArgumentError('Experience cannot be negative.');
+    }
+    experienceYearsValue = value;
+  }
+
   @override
-  void display() => print('Coach #$id | $name | $experienceYears years');
+  void display() {
+    print('Coach ID: $id | Name: $name | Experience: $experienceYears years');
+  }
+
+  @override
+  String getRole() => 'Coach';
 }
 
+// Team class.
 class Team {
-  final String name;
+  String nameValue;
   int? coachId;
-  final Set<int> playerIds = <int>{};
-  Team({required this.name});
+  Set<int> playerIds = {};
+
+  Team({required String name}) : nameValue = '' {
+    this.name = name;
+  }
+
+  String get name => nameValue;
+
+  set name(String value) {
+    if (value.trim().isEmpty) {
+      throw ArgumentError('Team name cannot be empty.');
+    }
+    nameValue = value.trim();
+  }
+
+  void display() {
+    print('Team: $name');
+    print('Coach ID: ${coachId ?? "Not assigned"}');
+    print('Players IDs: $playerIds');
+  }
 }
 
+// Manages players, coaches and teams.
 class TeamManager {
-  final Map<int, Player> players = {};
-  final Map<int, Coach> coaches = {};
-  final Map<String, Team> teams = {};
+  // Two static members.
+  static int totalPlayers = 0;
+  static const int maximumPlayersPerTeam = 30;
 
-  // One inner Set represents the player IDs of one team.
-  final Set<Set<int>> teamPlayers = {};
+  Map<int, Player> players = {};
+  Map<int, Coach> coaches = {};
+  Map<String, Team> teams = {};
 
-  bool registerPlayer(Player p) {
-    if (p.id <= 0 || p.name.trim().isEmpty || p.position.trim().isEmpty) {
-      print('Invalid player: ID must be positive; name and position cannot be empty.');
+  // Required nested Set.
+  Set<Set<int>> teamPlayers = {};
+
+  // Add player.
+  bool addPlayer(Player player) {
+    if (players.containsKey(player.id)) {
+      print('Player ID already exists.');
       return false;
     }
-    if (players.containsKey(p.id)) {
-      print('Player ID already exists.'); return false;
-    }
-    players[p.id] = p;
-    print('Player registered.'); return true;
+
+    players[player.id] = player;
+    totalPlayers++;
+
+    print('Player added successfully.');
+    return true;
   }
 
-  bool registerCoach(Coach c) {
-    if (c.id <= 0 || c.name.trim().isEmpty || c.experienceYears < 0) {
-      print('Invalid coach: ID must be positive, name cannot be empty, years cannot be negative.');
+  // Add coach.
+  bool addCoach(Coach coach) {
+    if (coaches.containsKey(coach.id)) {
+      print('Coach ID already exists.');
       return false;
     }
-    if (coaches.containsKey(c.id)) {
-      print('Coach ID already exists.'); return false;
-    }
-    coaches[c.id] = c;
-    print('Coach registered.'); return true;
+
+    coaches[coach.id] = coach;
+    print('Coach added successfully.');
+    return true;
   }
 
+  // Create team.
   bool createTeam(String name) {
-    final key = name.trim().toLowerCase();
+    String key = name.trim().toLowerCase();
+
     if (key.isEmpty || teams.containsKey(key)) {
-      print('Invalid or duplicate team name.'); return false;
+      print('Invalid or existing team name.');
+      return false;
     }
-    final team = Team(name: name.trim());
+
+    Team team = Team(name: name);
     teams[key] = team;
+
+    // Add the team's player set to the nested Set.
     teamPlayers.add(team.playerIds);
-    print('Team created.'); return true;
+
+    print('Team created successfully.');
+    return true;
   }
 
-  Team? findTeam(String name) => teams[name.trim().toLowerCase()];
+  // Assign player to team.
+  bool assignPlayer(int playerId, String teamName) {
+    if (!players.containsKey(playerId)) {
+      print('Player does not exist.');
+      return false;
+    }
 
+    String key = teamName.trim().toLowerCase();
+    Team? team = teams[key];
+
+    if (team == null) {
+      print('Team does not exist.');
+      return false;
+    }
+
+    // Prevent assigning one player to more than one team.
+    for (Team t in teams.values) {
+      if (t.playerIds.contains(playerId)) {
+        print('Player already assigned to a team.');
+        return false;
+      }
+    }
+
+    if (team.playerIds.length >= maximumPlayersPerTeam) {
+      print('Team is full.');
+      return false;
+    }
+
+    team.playerIds.add(playerId);
+    print('Player assigned successfully.');
+    return true;
+  }
+
+  // Assign coach to team.
+  bool assignCoach(int coachId, String teamName) {
+    if (!coaches.containsKey(coachId)) {
+      print('Coach does not exist.');
+      return false;
+    }
+
+    Team? team = teams[teamName.trim().toLowerCase()];
+
+    if (team == null) {
+      print('Team does not exist.');
+      return false;
+    }
+
+    team.coachId = coachId;
+    print('Coach assigned successfully.');
+    return true;
+  }
+
+  // Search player.
   Player? searchPlayer(int id) {
-    final player = players[id];
+    Player? player = players[id];
+
     if (player == null) {
       print('Player not found.');
     } else {
       player.display();
     }
+
     return player;
   }
 
+  // Search team.
   Team? searchTeam(String name) {
-    final team = findTeam(name);
+    Team? team = teams[name.trim().toLowerCase()];
+
     if (team == null) {
       print('Team not found.');
     } else {
-      print('Team found: ${team.name}');
-      print('Player IDs: ${team.playerIds}');
+      team.display();
     }
+
     return team;
   }
 
-  bool assignPlayer(int playerId, String teamName) {
-    if (!players.containsKey(playerId)) {
-      print('Player not found.'); return false;
+  // Update player.
+  bool updatePlayer(int id, String newName, String newPosition) {
+    Player? player = players[id];
+
+    if (player == null) {
+      print('Player not found.');
+      return false;
     }
-    final team = findTeam(teamName);
-    if (team == null) {
-      print('Team not found.'); return false;
+
+    try {
+      if (newName.trim().isNotEmpty) {
+        player.name = newName;
+      }
+
+      if (newPosition.trim().isNotEmpty) {
+        player.position = newPosition;
+      }
+    } on ArgumentError catch (e) {
+      print('Invalid data: $e');
+      return false;
     }
-    if (teams.values.any((t) => t.playerIds.contains(playerId))) {
-      print('Player is already assigned to a team.'); return false;
-    }
-    team.playerIds.add(playerId);
-    print('Player assigned.'); return true;
+
+    print('Player updated successfully.');
+    return true;
   }
 
-  bool removePlayerFromTeam(int playerId, String teamName) {
-    final team = findTeam(teamName);
-    if (team == null || !team.playerIds.remove(playerId)) {
-      print('Team/player assignment not found.'); return false;
-    }
-    print('Player removed from team.'); return true;
-  }
-
-  bool assignCoach(int coachId, String teamName) {
-    if (!coaches.containsKey(coachId)) {
-      print('Coach not found.'); return false;
-    }
-    final team = findTeam(teamName);
-    if (team == null) {
-      print('Team not found.'); return false;
-    }
-    team.coachId = coachId;
-    print('Coach assigned.'); return true;
-  }
-
-  bool updatePlayer(int id, {String? name, String? position}) {
-    final p = players[id];
-    if (p == null) { print('Player not found.'); return false; }
-    if (name != null && name.trim().isNotEmpty) p.name = name.trim();
-    if (position != null && position.trim().isNotEmpty) {
-      p.position = position.trim();
-    }
-    print('Player updated.'); return true;
-  }
-
+  // Delete player.
   bool deletePlayer(int id) {
-    final p = players.remove(id);
-    if (p == null) { print('Player not found.'); return false; }
-    for (final team in teams.values) { team.playerIds.remove(id); }
-    print('Player ${p.name} deleted.'); return true;
-  }
+    Player? player = players.remove(id);
 
-  bool deleteCoach(int id) {
-    final c = coaches.remove(id);
-    if (c == null) { print('Coach not found.'); return false; }
-    for (final team in teams.values) {
-      if (team.coachId == id) team.coachId = null;
+    if (player == null) {
+      print('Player not found.');
+      return false;
     }
-    print('Coach ${c.name} deleted.'); return true;
+
+    for (Team team in teams.values) {
+      team.playerIds.remove(id);
+    }
+
+    totalPlayers--;
+    print('Player deleted successfully.');
+    return true;
   }
 
-  bool deleteTeam(String name) {
-    final team = teams.remove(name.trim().toLowerCase());
-    if (team == null) { print('Team not found.'); return false; }
-    teamPlayers.remove(team.playerIds);
-    print('Team ${team.name} deleted.'); return true;
-  }
+  // Delete coach.
+  bool deleteCoach(int id) {
+    Coach? coach = coaches.remove(id);
 
-  void displayPlayers() {
-    print('\n--- PLAYERS ---');
-    if (players.isEmpty) print('No players.');
-    for (final p in players.values) { p.display(); }
-  }
+    if (coach == null) {
+      print('Coach not found.');
+      return false;
+    }
 
-  void displayCoaches() {
-    print('\n--- COACHES ---');
-    if (coaches.isEmpty) print('No coaches.');
-    for (final c in coaches.values) { c.display(); }
-  }
-
-  void displayTeams() {
-    print('\n--- TEAMS ---');
-    if (teams.isEmpty) print('No teams.');
-    for (final team in teams.values) {
-      final coach = team.coachId == null ? null : coaches[team.coachId];
-      print('\n${team.name} | Coach: ${coach?.name ?? "Not assigned"}');
-      if (team.playerIds.isEmpty) print('No players assigned.');
-      for (final id in team.playerIds) {
-        final p = players[id];
-        print(p == null ? 'Unknown player #$id' : '${p.name} (#${p.id}) - ${p.position}');
+    for (Team team in teams.values) {
+      if (team.coachId == id) {
+        team.coachId = null;
       }
     }
+
+    print('Coach deleted successfully.');
+    return true;
   }
 
-  // Uses a snapshot of the real teamPlayers so the real data is never changed.
+  // Delete team.
+  bool deleteTeam(String name) {
+    String key = name.trim().toLowerCase();
+    Team? team = teams.remove(key);
+
+    if (team == null) {
+      print('Team not found.');
+      return false;
+    }
+
+    teamPlayers.remove(team.playerIds);
+    print('Team deleted successfully.');
+    return true;
+  }
+
+  // Display all players.
+  void displayPlayers() {
+    print('\\n--- PLAYERS ---');
+
+    if (players.isEmpty) {
+      print('No players found.');
+    }
+
+    for (Player p in players.values) {
+      p.display();
+    }
+  }
+
+  // Display all coaches.
+  void displayCoaches() {
+    print('\\n--- COACHES ---');
+
+    if (coaches.isEmpty) {
+      print('No coaches found.');
+    }
+
+    for (Coach c in coaches.values) {
+      c.display();
+    }
+  }
+
+  // Display all teams.
+  void displayTeams() {
+    print('\\n--- TEAMS ---');
+
+    if (teams.isEmpty) {
+      print('No teams found.');
+    }
+
+    for (Team t in teams.values) {
+      t.display();
+    }
+  }
+
+  // Nested Set shallow and deep copy demonstration.
   void demonstrateTeamPlayersCopies() {
-    print('\nteamPlayers copy test');
-    final original = teamPlayers.map((s) => Set<int>.from(s)).toSet();
-    final i = original.toList().indexWhere((s) => s.isNotEmpty);
-    if (i == -1) {
-      print('Create teams and assign players first.');
+    print('\\n===== TEAM PLAYERS COPY TEST =====');
+
+    // Create a separate original example from current data.
+    Set<Set<int>> original =
+        teamPlayers.map((s) => Set<int>.from(s)).toSet();
+
+    if (original.isEmpty) {
+      print('Create a team and assign a player first.');
       return;
     }
-    final shallow = Set<Set<int>>.from(original);
-    final deep = original.map((s) => Set<int>.from(s)).toSet();
 
-    final sInner = shallow.elementAt(i);
-    sInner.remove(sInner.first);
-    sInner.add(999);
+    // Shallow copy: inner Sets are shared.
+    Set<Set<int>> shallow = Set<Set<int>>.from(original);
 
-    final dInner = deep.elementAt(i);
-    dInner.remove(dInner.first);
-    dInner.add(888);
+    // Deep copy: every inner Set is cloned.
+    Set<Set<int>> deep =
+        original.map((s) => Set<int>.from(s)).toSet();
 
-    print('Shallow copy: removed first ID and added 999 in one team set.');
-    print('Deep copy: removed first ID and added 888 in one team set.');
-    print('Original: $original');
-    print('Shallow:  $shallow');
-    print('Deep:     $deep');
-    print('Shallow inner-set edits affect Original; deep-copy edits do not.');
+    print('Original before changes: $original');
+
+    // Change inner Set in shallow copy.
+    shallow.first.add(999);
+
+    // Change inner Set in deep copy.
+    deep.first.add(888);
+
+    print('Original after shallow change: $original');
+    print('Shallow copy: $shallow');
+    print('Deep copy: $deep');
+
+    print('Shallow change affects original because inner Sets are shared.');
+    print('Deep change does not affect original because inner Sets are copied.');
   }
 }
