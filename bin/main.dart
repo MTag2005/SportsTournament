@@ -1,151 +1,251 @@
 
 import 'dart:io';
+
 import 'package:sports_tournament/person1_people_teams.dart';
 import 'package:sports_tournament/person2_tournament.dart';
 
+// Read text safely.
 String ask(String message) {
   stdout.write(message);
   return stdin.readLineSync()?.trim() ?? '';
 }
 
+// Read integer safely.
 int askInt(String message) {
   while (true) {
-    final value = int.tryParse(ask(message));
-    if (value != null) return value;
-    print('Enter a valid integer.');
+    stdout.write(message);
+
+    String? input = stdin.readLineSync();
+
+    if (input == null) {
+      print('\nInput closed. Program terminated.');
+      exit(0);
+    }
+
+    int? number = int.tryParse(input.trim());
+
+    if (number != null) {
+      return number;
+    }
+
+    print('Please enter a valid number.');
   }
 }
 
 void main() {
-  final manager = TeamManager();
-  final tournament = TournamentSystem(manager);
+  TeamManager manager = TeamManager();
+  TournamentSystem tournament = TournamentSystem(manager);
 
   while (true) {
     print('''
-========= SPORTS TOURNAMENT MANAGEMENT =========
-1 Register player       2 Register coach
-3 Create team           4 Assign player to team
-5 Assign coach          6 Display players
-7 Display coaches       8 Display teams
-9 Schedule match        10 Record result
-11 Display matches      12 Display rounds
-13 Display statistics   14 Display ranking
-15 Search matches       16 Update player
-17 Remove player from team
-18 Delete player        19 Delete coach
-20 Delete team          21 Copy demonstrations
-22 Search player        23 Search team
-24 Tournament report
-0 Exit
-================================================
-''');
-    final choice = askInt('Choose: ');
+========================================
+     SPORTS TOURNAMENT MANAGEMENT
+========================================
 
-    switch (choice) {
-      case 1:
-        manager.registerPlayer(Player(
-          id: askInt('Player ID: '),
-          name: ask('Player name: '),
-          position: ask('Position: '),
-        ));
-        break;
-      case 2:
-        manager.registerCoach(Coach(
-          id: askInt('Coach ID: '),
-          name: ask('Coach name: '),
-          experienceYears: askInt('Experience years: '),
-        ));
-        break;
-      case 3:
-        manager.createTeam(ask('Team name: '));
-        break;
-      case 4:
-        manager.assignPlayer(askInt('Player ID: '), ask('Team name: '));
-        break;
-      case 5:
-        manager.assignCoach(askInt('Coach ID: '), ask('Team name: '));
-        break;
-      case 6:
-        manager.displayPlayers();
-        break;
-      case 7:
-        manager.displayCoaches();
-        break;
-      case 8:
-        manager.displayTeams();
-        break;
-      case 9:
-        tournament.scheduleMatch(
-          askInt('Match ID: '), ask('First team: '),
-          ask('Second team: '), askInt('Round number: '),
-        );
-        break;
-      case 10:
-        tournament.recordResult(
-          askInt('Match ID: '), askInt('First team score: '),
-          askInt('Second team score: '),
-        );
-        break;
-      case 11:
-        tournament.displayMatches();
-        break;
-      case 12:
-        tournament.displayRounds();
-        break;
-      case 13:
-        tournament.displayStatistics();
-        break;
-      case 14:
-        tournament.displayRanking();
-        break;
-      case 15:
-        tournament.searchMatches(ask('Team name: '));
-        break;
-      case 16:
-        final id = askInt('Player ID: ');
-        final name = ask('New name (Enter to keep): ');
-        final position = ask('New position (Enter to keep): ');
-        manager.updatePlayer(id,
-          name: name.isEmpty ? null : name,
-          position: position.isEmpty ? null : position);
-        break;
-      case 17:
-        manager.removePlayerFromTeam(
-          askInt('Player ID: '), ask('Team name: '));
-        break;
-      case 18:
-        manager.deletePlayer(askInt('Player ID: '));
-        break;
-      case 19:
-        manager.deleteCoach(askInt('Coach ID: '));
-        break;
-      case 20:
-        final teamName = ask('Team name: ');
-        if (manager.deleteTeam(teamName)) {
-          tournament.removeTeamData(teamName);
-        }
-        break;
-      case 21:
-        manager.demonstrateTeamPlayersCopies();
-        tournament.demonstrateRoundsCopies();
-        tournament.demonstrateStatisticsCopies();
-        break;
-      case 22:
-        manager.searchPlayer(askInt('Player ID: '));
-        break;
-      case 23:
-        manager.searchTeam(ask('Team name: '));
-        break;
-      case 24:
-        tournament.displayTournamentReport();
-        break;
-      case 0:
-        print('Program closed.');
-        return;
-      default:
-        print('Invalid choice.');
+PERSON 1 - PLAYERS, COACHES AND TEAMS
+
+1. Add Player
+2. Add Coach
+3. Create Team
+4. Assign Player to Team
+5. Assign Coach to Team
+6. Display Players
+7. Display Coaches
+8. Display Teams
+9. Search Player
+10. Search Team
+11. Update Player
+12. Delete Player
+13. Delete Coach
+14. Delete Team
+
+PERSON 2 - TOURNAMENT
+
+15. Schedule Match
+16. Record Match Result
+17. Display Matches
+18. Search Match
+19. Search Matches by Team
+20. Display Rounds
+21. Display Statistics
+22. Display Ranking
+23. Tournament Report
+
+COPY DEMONSTRATIONS
+
+24. Copy Team Players (Set)
+25. Copy Tournament Rounds (List)
+26. Copy Team Statistics (Map)
+
+0. Exit
+
+========================================
+''');
+
+    int choice = askInt('Choose an option: ');
+
+    try {
+      switch (choice) {
+        case 1:
+          Player player = Player(
+            id: askInt('Player ID: '),
+            name: ask('Player Name: '),
+            position: ask('Player Position: '),
+          );
+
+          manager.addPlayer(player);
+          break;
+
+        case 2:
+          Coach coach = Coach(
+            id: askInt('Coach ID: '),
+            name: ask('Coach Name: '),
+            experienceYears: askInt('Experience Years: '),
+          );
+
+          manager.addCoach(coach);
+          break;
+
+        case 3:
+          manager.createTeam(ask('Team Name: '));
+          break;
+
+        case 4:
+          manager.assignPlayer(
+            askInt('Player ID: '),
+            ask('Team Name: '),
+          );
+          break;
+
+        case 5:
+          manager.assignCoach(
+            askInt('Coach ID: '),
+            ask('Team Name: '),
+          );
+          break;
+
+        case 6:
+          manager.displayPlayers();
+          break;
+
+        case 7:
+          manager.displayCoaches();
+          break;
+
+        case 8:
+          manager.displayTeams();
+          break;
+
+        case 9:
+          manager.searchPlayer(askInt('Player ID: '));
+          break;
+
+        case 10:
+          manager.searchTeam(ask('Team Name: '));
+          break;
+
+        case 11:
+          int id = askInt('Player ID: ');
+          String name = ask('New Name: ');
+          String position = ask('New Position: ');
+
+          manager.updatePlayer(id, name, position);
+          break;
+
+        case 12:
+          manager.deletePlayer(askInt('Player ID: '));
+          break;
+
+        case 13:
+          manager.deleteCoach(askInt('Coach ID: '));
+          break;
+
+        case 14:
+          String teamName = ask('Team Name: ');
+
+          if (manager.deleteTeam(teamName)) {
+            tournament.removeTeamData(teamName);
+          }
+          break;
+
+        case 15:
+          int matchId = askInt('Match ID: ');
+          String team1 = ask('First Team: ');
+          String team2 = ask('Second Team: ');
+          int round = askInt('Round Number: ');
+
+          tournament.scheduleMatch(
+            matchId,
+            team1,
+            team2,
+            round,
+          );
+          break;
+
+        case 16:
+          int id = askInt('Match ID: ');
+          int score1 = askInt('First Team Score: ');
+          int score2 = askInt('Second Team Score: ');
+
+          tournament.recordResult(id, score1, score2);
+          break;
+
+        case 17:
+          tournament.displayMatches();
+          break;
+
+        case 18:
+          tournament.searchMatch(askInt('Match ID: '));
+          break;
+
+        case 19:
+          tournament.searchMatchesByTeam(
+            ask('Team Name: '),
+          );
+          break;
+
+        case 20:
+          tournament.displayRounds();
+          break;
+
+        case 21:
+          tournament.displayStatistics();
+          break;
+
+        case 22:
+          tournament.displayRanking();
+          break;
+
+        case 23:
+          tournament.displayReport();
+          break;
+
+        case 24:
+          manager.demonstrateTeamPlayersCopies();
+          break;
+
+        case 25:
+          tournament.demonstrateRoundsCopies();
+          break;
+
+        case 26:
+          tournament.demonstrateStatisticsCopies();
+          break;
+
+        case 0:
+          print('Program closed successfully.');
+          return;
+
+        default:
+          print('Invalid menu choice.');
+      }
+    } on ArgumentError catch (e) {
+      print('Invalid input: $e');
+    } catch (e) {
+      print('Something went wrong: $e');
     }
-    print('\nPress Enter to continue...');
+
+    print('\nPress Enter to return to menu...');
     stdin.readLineSync();
   }
 }
