@@ -1,0 +1,6 @@
+name: sports_tournament
+description: Sports Tournament Management (Dart console project).
+version: 1.0.0
+
+environment:
+  sdk: '>=2.17.0 <4.0.0'
