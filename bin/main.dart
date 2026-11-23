@@ -145,7 +145,7 @@ COPY DEMONSTRATIONS
           break;
 
         case 11:
-          int id = askInt('Player ID: ');
+          int playerUpdateId = askInt('Player ID: ');
           String name = ask('New Name: ');
           String position = ask('New Position: ');
 
@@ -183,7 +183,7 @@ COPY DEMONSTRATIONS
           break;
 
         case 16:
-          int id = askInt('Match ID: ');
+          int resultMatchId = askInt('Match ID: ');
           int score1 = askInt('First Team Score: ');
           int score2 = askInt('Second Team Score: ');
 
